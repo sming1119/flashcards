@@ -9,7 +9,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap');
         
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -63,7 +63,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.3</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.4</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -115,21 +115,21 @@
                     </div>
                 </div>
 
-                <!-- 題目與解答整合區域（修正滾動與文字切頭問題） -->
-                <div class="flex-1 flex flex-col items-center gap-4 sm:gap-6 px-2 sm:px-3 z-10 py-2 sm:py-4 w-full overflow-y-auto">
-                    <div class="my-auto w-full flex flex-col gap-4 sm:gap-6">
+                <!-- 題目與解答整合區域（採用安全垂直置中與大字體結構） -->
+                <div class="flex-1 w-full overflow-y-auto px-2 sm:px-3 z-10 my-1">
+                    <div class="min-h-full flex flex-col justify-center items-center gap-5 sm:gap-7 py-3 w-full">
                         <!-- 題目區塊 -->
                         <div class="w-full flex flex-col justify-center items-center text-center">
-                            <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-1 sm:mb-2">題目</span>
-                            <p id="dualQuestionText" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
+                            <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-1.5 sm:mb-2">題目</span>
+                            <p id="dualQuestionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
                                 正在讀取題目...
                             </p>
                         </div>
 
                         <!-- 解答區塊 -->
                         <div class="w-full flex flex-col justify-center items-center text-center">
-                            <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1 sm:mb-2">解答</span>
-                            <p id="dualAnswerText" class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-center leading-normal text-emerald-300 w-full">
+                            <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1.5 sm:mb-2">解答</span>
+                            <p id="dualAnswerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-relaxed text-emerald-300 w-full">
                                 正在讀取答案...
                             </p>
                         </div>
@@ -171,10 +171,12 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 flex flex-col items-center my-2 overflow-y-auto px-2">
-                        <p id="questionText" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full my-auto">
-                            正在讀取題目...
-                        </p>
+                    <div class="flex-1 w-full overflow-y-auto px-2 my-2">
+                        <div class="min-h-full flex items-center justify-center">
+                            <p id="questionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
+                                正在讀取題目...
+                            </p>
+                        </div>
                     </div>
                     
                     <div class="text-center text-gray-400 text-xs font-medium shrink-0">
@@ -200,10 +202,12 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 flex flex-col items-center my-2 overflow-y-auto px-2">
-                        <p id="answerText" class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-center leading-normal text-emerald-200 w-full my-auto">
-                            正在讀取答案...
-                        </p>
+                    <div class="flex-1 w-full overflow-y-auto px-2 my-2">
+                        <div class="min-h-full flex items-center justify-center">
+                            <p id="answerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-relaxed text-emerald-200 w-full">
+                                正在讀取答案...
+                            </p>
+                        </div>
                     </div>
                     
                     <div class="text-center text-gray-400 text-xs font-medium shrink-0">
