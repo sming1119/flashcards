@@ -63,6 +63,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.0.0</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -114,10 +115,10 @@
                     </div>
                 </div>
 
-                <!-- 題目與答案整合區域（消除中間大面積空隙） -->
-                <div class="flex-1 flex flex-col justify-evenly items-center px-2 z-10 py-2 w-full">
+                <!-- 題目與解答整合區域（消除中間大面積空隙） -->
+                <div class="flex-1 flex flex-col justify-center items-center gap-3 sm:gap-4 md:gap-5 px-2 z-10 py-2 w-full my-auto">
                     <!-- 題目區塊 -->
-                    <div class="w-full flex flex-col justify-center items-center text-center my-auto">
+                    <div class="w-full flex flex-col justify-center items-center text-center">
                         <span class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">題目</span>
                         <p id="dualQuestionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
                             正在讀取題目...
@@ -125,7 +126,7 @@
                     </div>
 
                     <!-- 解答區塊 -->
-                    <div class="w-full flex flex-col justify-center items-center text-center my-auto">
+                    <div class="w-full flex flex-col justify-center items-center text-center">
                         <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">解答</span>
                         <p id="dualAnswerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-snug text-emerald-300 w-full">
                             正在讀取答案...
