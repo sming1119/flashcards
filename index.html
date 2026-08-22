@@ -63,7 +63,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.2.0</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.3</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -94,10 +94,10 @@
 
     <!-- 主卡片區塊 -->
     <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center my-1 sm:my-auto w-full">
-        <div id="cardContainer" class="w-full h-[calc(100vh-160px)] min-h-[480px] max-h-[680px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
+        <div id="cardContainer" class="w-full h-[calc(100vh-170px)] sm:h-[calc(100vh-160px)] min-h-[380px] max-h-[680px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
             
             <!-- 1. 同時顯示模式容器 (預設) -->
-            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-3 sm:p-5 md:p-6 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
+            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-3 sm:p-5 md:p-6 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
                 <!-- 頂部資訊與管理按鈕 -->
                 <div class="flex justify-between items-center text-gray-400 text-sm font-medium z-10 px-1 pt-1 shrink-0">
                     <span id="dualCardProgress" class="font-bold text-base text-gray-300">0/0</span>
@@ -115,22 +115,24 @@
                     </div>
                 </div>
 
-                <!-- 題目與解答整合區域（消除中間大面積空隙） -->
-                <div class="flex-1 flex flex-col justify-center items-center gap-6 sm:gap-8 md:gap-10 px-3 z-10 py-4 w-full my-auto overflow-y-auto">
-                    <!-- 題目區塊 -->
-                    <div class="w-full flex flex-col justify-center items-center text-center">
-                        <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-2">題目</span>
-                        <p id="dualQuestionText" class="text-4xl md:text-3xl lg:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
-                            正在讀取題目...
-                        </p>
-                    </div>
+                <!-- 題目與解答整合區域（修正滾動與文字切頭問題） -->
+                <div class="flex-1 flex flex-col items-center gap-4 sm:gap-6 px-2 sm:px-3 z-10 py-2 sm:py-4 w-full overflow-y-auto">
+                    <div class="my-auto w-full flex flex-col gap-4 sm:gap-6">
+                        <!-- 題目區塊 -->
+                        <div class="w-full flex flex-col justify-center items-center text-center">
+                            <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-1 sm:mb-2">題目</span>
+                            <p id="dualQuestionText" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
+                                正在讀取題目...
+                            </p>
+                        </div>
 
-                    <!-- 解答區塊 -->
-                    <div class="w-full flex flex-col justify-center items-center text-center">
-                        <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-2">解答</span>
-                        <p id="dualAnswerText" class="text-3xl md:text-2xl lg:text-3xl font-bold text-center leading-relaxed text-emerald-300 w-full">
-                            正在讀取答案...
-                        </p>
+                        <!-- 解答區塊 -->
+                        <div class="w-full flex flex-col justify-center items-center text-center">
+                            <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1 sm:mb-2">解答</span>
+                            <p id="dualAnswerText" class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-center leading-normal text-emerald-300 w-full">
+                                正在讀取答案...
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -150,11 +152,11 @@
             </div>
 
             <!-- 2. 翻卡模式容器 (隱藏/切換用) -->
-            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[28px] md:rounded-[32px] hidden">
+            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[24px] sm:rounded-[28px] md:rounded-[32px] hidden">
                 
                 <!-- 卡片正面 (題目) -->
-                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden border border-gray-700">
-                    <div class="flex justify-between items-center text-gray-400 text-sm font-medium">
+                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-7 flex flex-col justify-between backface-hidden border border-gray-700">
+                    <div class="flex justify-between items-center text-gray-400 text-sm font-medium shrink-0">
                         <span id="cardProgressFront" class="font-bold text-base text-gray-300">0/0</span>
                         <div class="flex items-center gap-3">
                             <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
@@ -169,20 +171,20 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
-                        <p id="questionText" class="text-4xl md:text-3xl lg:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
+                    <div class="flex-1 flex flex-col items-center my-2 overflow-y-auto px-2">
+                        <p id="questionText" class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full my-auto">
                             正在讀取題目...
                         </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-xs font-medium">
+                    <div class="text-center text-gray-400 text-xs font-medium shrink-0">
                         點擊卡片查看答案
                     </div>
                 </div>
 
                 <!-- 卡片背面 (解答) -->
-                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
-                    <div class="flex justify-between items-center text-emerald-400 text-sm font-medium">
+                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
+                    <div class="flex justify-between items-center text-emerald-400 text-sm font-medium shrink-0">
                         <span id="cardProgressBack" class="font-bold text-base text-emerald-300">0/0</span>
                         <div class="flex items-center gap-3">
                             <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.answer)" title="朗讀解答" class="hover:text-emerald-300 transition p-1 text-emerald-400">
@@ -198,13 +200,13 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
-                        <p id="answerText" class="text-3xl md:text-2xl lg:text-3xl font-bold text-center leading-relaxed text-emerald-200 w-full">
+                    <div class="flex-1 flex flex-col items-center my-2 overflow-y-auto px-2">
+                        <p id="answerText" class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-center leading-normal text-emerald-200 w-full my-auto">
                             正在讀取答案...
                         </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-xs font-medium">
+                    <div class="text-center text-gray-400 text-xs font-medium shrink-0">
                         點擊卡片翻回題目
                     </div>
                 </div>
