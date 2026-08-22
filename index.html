@@ -39,9 +39,16 @@
         .btn-active:active {
             transform: scale(0.95);
         }
+
+        /* 同時顯示模式左右點擊區域 Hover 效果 */
+        .click-zone-left:hover {
+            background: linear-gradient(to right, rgba(255,255,255,0.06), transparent);
+        }
+        .click-zone-right:hover {
+            background: linear-gradient(to left, rgba(255,255,255,0.06), transparent);
+        }
     </style>
 </head>
-<!-- STREAMING_CHUNK: Rendering GitHub Pages UI layout... -->
 <body class="min-h-screen flex flex-col justify-between items-center p-4 md:p-8 relative">
 
     <!-- Toast 通知訊息元件 -->
@@ -53,7 +60,7 @@
     </div>
 
     <!-- 頂部標題列 -->
-    <header class="w-full max-w-2xl flex justify-between items-center mb-4">
+    <header class="w-full max-w-2xl flex justify-between items-center mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
@@ -63,6 +70,11 @@
         
         <!-- 操作選單按鈕區 -->
         <div class="flex items-center space-x-2">
+            <!-- 模式切換按鈕 -->
+            <button onclick="toggleDisplayMode()" id="modeToggleBtn" title="切換顯示模式" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs md:text-sm font-medium px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-indigo-200 btn-active">
+                <i class="fa-solid fa-table-columns" id="modeIcon"></i>
+                <span id="modeText">同時顯示</span>
+            </button>
             <button onclick="openConfigModal()" title="設定 API 網址" class="p-2 rounded-full hover:bg-gray-200 text-gray-600 transition">
                 <i class="fa-solid fa-gear text-lg"></i>
             </button>
@@ -79,15 +91,62 @@
         </div>
     </header>
 
-    <!-- STREAMING_CHUNK: Rendering main flashcard element... -->
     <!-- 主卡片區塊 -->
     <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center my-auto">
-        <div class="w-full h-[380px] md:h-[420px] perspective-1000 cursor-pointer" onclick="flipCard()">
-            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[32px]">
+        <div id="cardContainer" class="w-full h-[400px] md:h-[460px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
+            
+            <!-- 1. 同時顯示模式容器 (預設) -->
+            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[32px] p-6 md:p-8 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
+                <!-- 頂部資訊與管理按鈕 -->
+                <div class="flex justify-between items-center text-gray-400 text-sm font-medium z-10">
+                    <span id="dualCardProgress">0/0</span>
+                    <div class="flex items-center gap-3">
+                        <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
+                            <i class="fa-solid fa-pen-to-square text-base"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); openDeleteModal()" title="刪除此題" class="hover:text-red-400 transition p-1">
+                            <i class="fa-solid fa-trash-can text-base"></i>
+                        </button>
+                        <span class="bg-indigo-900/60 text-indigo-300 px-3 py-1 rounded-full text-xs border border-indigo-700/50">雙顯模式</span>
+                    </div>
+                </div>
+
+                <!-- 題目區塊 -->
+                <div class="flex-1 flex flex-col justify-center items-center my-2 overflow-y-auto px-2 z-10 border-b border-gray-700/60 pb-4">
+                    <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">題目</span>
+                    <p id="dualQuestionText" class="text-xl md:text-2xl font-medium text-center leading-relaxed text-gray-100">
+                        正在讀取題目...
+                    </p>
+                </div>
+
+                <!-- 答案區塊 -->
+                <div class="flex-1 flex flex-col justify-center items-center my-2 overflow-y-auto px-2 z-10 pt-2">
+                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">解答</span>
+                    <p id="dualAnswerText" class="text-lg md:text-xl font-medium text-center leading-relaxed text-emerald-200">
+                        正在讀取答案...
+                    </p>
+                </div>
+
+                <!-- 底部提示區塊 -->
+                <div class="text-center text-gray-400 text-xs font-medium z-10 flex justify-between px-4 pt-2 border-t border-gray-800">
+                    <span><i class="fa-solid fa-chevron-left mr-1"></i>點擊左側：上一題</span>
+                    <span>點擊右側：下一題<i class="fa-solid fa-chevron-right ml-1"></i></span>
+                </div>
+
+                <!-- 左右點擊區域微光 hover 提示 overlay -->
+                <div class="absolute inset-y-0 left-0 w-1/2 click-zone-left pointer-events-none transition-all flex items-center justify-start pl-4 group">
+                    <i class="fa-solid fa-chevron-left text-white/20 text-3xl group-hover:text-white/50 transition"></i>
+                </div>
+                <div class="absolute inset-y-0 right-0 w-1/2 click-zone-right pointer-events-none transition-all flex items-center justify-end pr-4 group">
+                    <i class="fa-solid fa-chevron-right text-white/20 text-3xl group-hover:text-white/50 transition"></i>
+                </div>
+            </div>
+
+            <!-- 2. 翻卡模式容器 (隱藏/切換用) -->
+            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[32px] hidden">
                 
                 <!-- 卡片正面 (題目) -->
                 <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[32px] p-8 flex flex-col justify-between backface-hidden border border-gray-700">
-                    <!-- 正面頂部：計數與編輯/刪除快捷按鈕 -->
                     <div class="flex justify-between items-center text-gray-400 text-sm font-medium">
                         <span id="cardProgressFront">0/0</span>
                         <div class="flex items-center gap-3">
@@ -100,14 +159,12 @@
                         </div>
                     </div>
                     
-                    <!-- 正面中央：題目內容 -->
                     <div class="flex-1 flex justify-center items-center my-4 overflow-y-auto px-2">
                         <p id="questionText" class="text-2xl md:text-3xl font-medium text-center leading-relaxed tracking-wide">
                             正在讀取題目...
                         </p>
                     </div>
                     
-                    <!-- 正面底部：提示字樣 -->
                     <div class="text-center text-gray-400 text-sm font-medium">
                         點擊卡片查看答案
                     </div>
@@ -115,7 +172,6 @@
 
                 <!-- 卡片背面 (答案) -->
                 <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[32px] p-8 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
-                    <!-- 背面頂部：計數 -->
                     <div class="flex justify-between items-center text-emerald-400 text-sm font-medium">
                         <span id="cardProgressBack">0/0</span>
                         <div class="flex items-center gap-3">
@@ -129,14 +185,12 @@
                         </div>
                     </div>
                     
-                    <!-- 背面中央：答案內容 -->
                     <div class="flex-1 flex justify-center items-center my-4 overflow-y-auto px-2">
                         <p id="answerText" class="text-xl md:text-2xl font-medium text-center leading-relaxed text-emerald-100">
                             正在讀取答案...
                         </p>
                     </div>
                     
-                    <!-- 背面底部：提示字樣 -->
                     <div class="text-center text-gray-400 text-sm font-medium">
                         點擊卡片翻回題目
                     </div>
@@ -146,7 +200,6 @@
         </div>
     </main>
 
-    <!-- STREAMING_CHUNK: Rendering footer controls... -->
     <!-- 底部控制導覽列 -->
     <footer class="w-full max-w-2xl mt-6 flex justify-center items-center gap-4 md:gap-6">
         <!-- 上一題 -->
@@ -172,7 +225,6 @@
         </button>
     </footer>
 
-    <!-- STREAMING_CHUNK: Rendering Config, Add, Edit, Delete Modals... -->
     <!-- 1. API 網址設定彈窗 (Config Modal) -->
     <div id="configModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
         <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl transition-all transform scale-95 opacity-0" id="configModalCard">
@@ -245,7 +297,7 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-800 mb-2">確認刪除字卡？</h3>
-            <p class="text-gray-500 text-sm mb-6">這將會從 Google 試算表中永久移除這張題目與解答，無法復原。</p>
+            <p class="text-gray-500 text-sm mb-6">這將會從 Google 試算表中刪除這張題目與解答，無法復原。</p>
             
             <div class="flex justify-center gap-3">
                 <button onclick="closeDeleteModal()" class="w-1/2 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">
@@ -259,13 +311,13 @@
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK: Fetch API logic and state management... -->
     <script>
         // 設定與狀態管理
         let gasApiUrl = localStorage.getItem('gas_flashcard_api_url') || 'https://script.google.com/macros/s/AKfycbwsURro3ap2LUFtgJV_5Gomu_gZzf7yXUmGqRPSle0NTpUKma-xPtBlHFxPXca2oH3Y/exec';
         let cards = [];
         let currentIndex = 0;
         let isFlipped = false;
+        let isDualMode = true; // 預設同時顯示題目與答案
         let correctCount = 0;
         let wrongCount = 0;
         let currentMode = 'add';
@@ -279,10 +331,10 @@
         ];
 
         window.onload = function() {
+            updateModeUI();
             if (gasApiUrl) {
                 fetchCardsFromAPI();
             } else {
-                // 未設定 API 時使用 Demo 資料，並提醒使用者設定 API
                 cards = JSON.parse(JSON.stringify(mockCards));
                 renderCard();
                 updateSyncStatus('demo', '示範模式 (點選⚙️設定API)');
@@ -290,7 +342,50 @@
             setupKeyboardListeners();
         };
 
-        /* STREAMING_CHUNK: Handling HTTP fetch request to GAS... */
+        function toggleDisplayMode() {
+            isDualMode = !isDualMode;
+            updateModeUI();
+            renderCard();
+            showToast(isDualMode ? '已切換為「同時顯示」模式' : '已切換為「翻卡」模式', 'info');
+        }
+
+        function updateModeUI() {
+            const modeText = document.getElementById('modeText');
+            const modeIcon = document.getElementById('modeIcon');
+            const dualView = document.getElementById('dualViewContainer');
+            const cardInner = document.getElementById('cardInner');
+
+            if (isDualMode) {
+                modeText.innerText = '同時顯示';
+                modeIcon.className = 'fa-solid fa-table-columns';
+                dualView.classList.remove('hidden');
+                cardInner.classList.add('hidden');
+            } else {
+                modeText.innerText = '翻卡模式';
+                modeIcon.className = 'fa-solid fa-rotate';
+                dualView.classList.add('hidden');
+                cardInner.classList.remove('hidden');
+            }
+        }
+
+        function handleCardClick(event) {
+            if (cards.length === 0) return;
+
+            if (isDualMode) {
+                // 同時顯示模式：判斷點擊卡片左邊或右邊
+                const rect = event.currentTarget.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                if (clickX < rect.width / 2) {
+                    prevCard();
+                } else {
+                    nextCard();
+                }
+            } else {
+                // 翻卡模式：點擊卡片翻轉
+                flipCard();
+            }
+        }
+
         function fetchCardsFromAPI() {
             if (!gasApiUrl) {
                 openConfigModal();
@@ -319,7 +414,6 @@
                 });
         }
 
-        /* STREAMING_CHUNK: Posting HTTP requests for CRUD actions... */
         function postToAPI(payload, onSuccess, onError) {
             if (!gasApiUrl) {
                 showToast('請先設定 API 網址', 'error');
@@ -327,7 +421,6 @@
                 return;
             }
 
-            // 使用 text/plain content-type 避免觸發 OPTIONS 預檢請求
             fetch(gasApiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -354,7 +447,6 @@
             showToast(errMsg, 'error');
         }
 
-        /* STREAMING_CHUNK: Card rendering logic... */
         function renderCard() {
             if (cards.length === 0) {
                 renderEmptyCard();
@@ -367,11 +459,19 @@
             const card = cards[currentIndex];
             const progressStr = `${currentIndex + 1}/${cards.length}`;
 
-            document.getElementById('questionText').innerText = card.question || '（此題無內容）';
-            document.getElementById('answerText').innerText = card.answer || '（此題無解答）';
-            
-            document.getElementById('cardProgressFront').innerText = progressStr;
-            document.getElementById('cardProgressBack').innerText = progressStr;
+            if (isDualMode) {
+                // 渲染同時顯示視圖
+                document.getElementById('dualQuestionText').innerText = card.question || '（此題無內容）';
+                document.getElementById('dualAnswerText').innerText = card.answer || '（此題無解答）';
+                document.getElementById('dualCardProgress').innerText = progressStr;
+            } else {
+                // 渲染翻卡視圖
+                document.getElementById('questionText').innerText = card.question || '（此題無內容）';
+                document.getElementById('answerText').innerText = card.answer || '（此題無解答）';
+                document.getElementById('cardProgressFront').innerText = progressStr;
+                document.getElementById('cardProgressBack').innerText = progressStr;
+            }
+
             document.getElementById('correctCount').innerText = correctCount;
             document.getElementById('wrongCount').innerText = wrongCount;
 
@@ -382,10 +482,19 @@
         function renderEmptyCard() {
             isFlipped = false;
             document.getElementById('cardInner').classList.remove('rotate-y-180');
-            document.getElementById('questionText').innerText = "目前沒有任何字卡，點擊右上角「新增題目」建立第一張卡片！";
-            document.getElementById('answerText').innerText = "尚未有解答";
+            
+            const emptyMsg = "目前沒有任何字卡，點擊右上角「新增題目」建立第一張卡片！";
+            const emptyAns = "尚未有解答";
+            
+            document.getElementById('dualQuestionText').innerText = emptyMsg;
+            document.getElementById('dualAnswerText').innerText = emptyAns;
+            document.getElementById('dualCardProgress').innerText = "0/0";
+
+            document.getElementById('questionText').innerText = emptyMsg;
+            document.getElementById('answerText').innerText = emptyAns;
             document.getElementById('cardProgressFront').innerText = "0/0";
             document.getElementById('cardProgressBack').innerText = "0/0";
+
             document.getElementById('prevBtn').disabled = true;
             document.getElementById('nextBtn').disabled = true;
         }
@@ -446,7 +555,6 @@
             showToast('已重置閱讀與答題進度', 'info');
         }
 
-        /* STREAMING_CHUNK: Modal controls and event handlers... */
         function openConfigModal() {
             document.getElementById('apiUrlInput').value = gasApiUrl;
             const modal = document.getElementById('configModal');
@@ -524,7 +632,6 @@
                 : { action: 'update', rowIndex: cards[currentIndex].rowIndex, question, answer };
 
             if (!gasApiUrl) {
-                // 本地模擬
                 setTimeout(() => {
                     if (currentMode === 'add') {
                         cards.push({ rowIndex: cards.length + 2, question, answer });
@@ -626,7 +733,6 @@
             else spinner.classList.add('hidden');
         }
 
-        /* STREAMING_CHUNK: Toast alert notifications and keyboard event listeners... */
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
@@ -682,7 +788,8 @@
                     prevCard();
                 } else if (e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
-                    flipCard();
+                    if (!isDualMode) flipCard();
+                    else nextCard();
                 }
             });
         }
