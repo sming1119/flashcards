@@ -93,52 +93,58 @@
 
     <!-- 主卡片區塊 -->
     <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center my-1 sm:my-auto w-full">
-        <div id="cardContainer" class="w-full h-[calc(100vh-180px)] min-h-[450px] max-h-[620px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
+        <div id="cardContainer" class="w-full h-[calc(100vh-160px)] min-h-[480px] max-h-[680px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
             
             <!-- 1. 同時顯示模式容器 (預設) -->
-            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-4 sm:p-6 md:p-8 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
+            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-3 sm:p-5 md:p-6 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
                 <!-- 頂部資訊與管理按鈕 -->
-                <div class="flex justify-between items-center text-gray-400 text-sm font-medium z-10">
-                    <span id="dualCardProgress">0/0</span>
+                <div class="flex justify-between items-center text-gray-400 text-sm font-medium z-10 px-1 pt-1 shrink-0">
+                    <span id="dualCardProgress" class="font-bold text-base text-gray-300">0/0</span>
                     <div class="flex items-center gap-3">
+                        <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
+                            <i class="fa-solid fa-volume-high text-lg"></i>
+                        </button>
                         <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
-                            <i class="fa-solid fa-pen-to-square text-base"></i>
+                            <i class="fa-solid fa-pen-to-square text-lg"></i>
                         </button>
                         <button onclick="event.stopPropagation(); openDeleteModal()" title="刪除此題" class="hover:text-red-400 transition p-1">
-                            <i class="fa-solid fa-trash-can text-base"></i>
+                            <i class="fa-solid fa-trash-can text-lg"></i>
                         </button>
-                        <span class="bg-indigo-900/60 text-indigo-300 px-3 py-1 rounded-full text-xs border border-indigo-700/50">雙顯模式</span>
+                        <span class="bg-indigo-900/60 text-indigo-300 px-2.5 py-0.5 rounded-full text-xs border border-indigo-700/50">雙顯模式</span>
                     </div>
                 </div>
 
-                <!-- 題目區塊 -->
-                <div class="flex-1 flex flex-col justify-center items-center my-1 overflow-y-auto px-1 z-10 border-b border-gray-700/60 pb-2">
-                    <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">題目</span>
-                    <p id="dualQuestionText" class="text-2xl sm:text-3xl font-bold text-center leading-relaxed text-gray-100">
-                        正在讀取題目...
-                    </p>
-                </div>
+                <!-- 題目與答案整合區域（消除中間大面積空隙） -->
+                <div class="flex-1 flex flex-col justify-evenly items-center px-2 z-10 py-2 w-full">
+                    <!-- 題目區塊 -->
+                    <div class="w-full flex flex-col justify-center items-center text-center my-auto">
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">題目</span>
+                        <p id="dualQuestionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
+                            正在讀取題目...
+                        </p>
+                    </div>
 
-                <!-- 答案區塊 -->
-                <div class="flex-1 flex flex-col justify-center items-center my-1 overflow-y-auto px-1 z-10 pt-2">
-                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">解答</span>
-                    <p id="dualAnswerText" class="text-xl sm:text-2xl font-bold text-center leading-relaxed text-emerald-200">
-                        正在讀取答案...
-                    </p>
+                    <!-- 解答區塊 -->
+                    <div class="w-full flex flex-col justify-center items-center text-center my-auto">
+                        <span class="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-1">解答</span>
+                        <p id="dualAnswerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-snug text-emerald-300 w-full">
+                            正在讀取答案...
+                        </p>
+                    </div>
                 </div>
 
                 <!-- 底部提示區塊 -->
-                <div class="text-center text-gray-400 text-xs font-medium z-10 flex justify-between px-2 pt-2 border-t border-gray-800">
+                <div class="text-center text-gray-400 text-xs font-medium z-10 flex justify-between px-2 pt-2 border-t border-gray-800/80 shrink-0">
                     <span><i class="fa-solid fa-chevron-left mr-1"></i>點擊左側：上一題</span>
                     <span>點擊右側：下一題<i class="fa-solid fa-chevron-right ml-1"></i></span>
                 </div>
 
                 <!-- 左右點擊區域微光 hover 提示 overlay -->
-                <div class="absolute inset-y-0 left-0 w-1/2 click-zone-left pointer-events-none transition-all flex items-center justify-start pl-4 group">
-                    <i class="fa-solid fa-chevron-left text-white/20 text-3xl group-hover:text-white/50 transition"></i>
+                <div class="absolute inset-y-0 left-0 w-1/2 click-zone-left pointer-events-none transition-all flex items-center justify-start pl-2 group">
+                    <i class="fa-solid fa-chevron-left text-white/15 text-xl group-hover:text-white/50 transition"></i>
                 </div>
-                <div class="absolute inset-y-0 right-0 w-1/2 click-zone-right pointer-events-none transition-all flex items-center justify-end pr-4 group">
-                    <i class="fa-solid fa-chevron-right text-white/20 text-3xl group-hover:text-white/50 transition"></i>
+                <div class="absolute inset-y-0 right-0 w-1/2 click-zone-right pointer-events-none transition-all flex items-center justify-end pr-2 group">
+                    <i class="fa-solid fa-chevron-right text-white/15 text-xl group-hover:text-white/50 transition"></i>
                 </div>
             </div>
 
@@ -146,52 +152,58 @@
             <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[28px] md:rounded-[32px] hidden">
                 
                 <!-- 卡片正面 (題目) -->
-                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-6 sm:p-8 flex flex-col justify-between backface-hidden border border-gray-700">
+                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden border border-gray-700">
                     <div class="flex justify-between items-center text-gray-400 text-sm font-medium">
-                        <span id="cardProgressFront">0/0</span>
+                        <span id="cardProgressFront" class="font-bold text-base text-gray-300">0/0</span>
                         <div class="flex items-center gap-3">
+                            <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
                             <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
-                                <i class="fa-solid fa-pen-to-square text-base"></i>
+                                <i class="fa-solid fa-pen-to-square text-lg"></i>
                             </button>
                             <button onclick="event.stopPropagation(); openDeleteModal()" title="刪除此題" class="hover:text-red-400 transition p-1">
-                                <i class="fa-solid fa-trash-can text-base"></i>
+                                <i class="fa-solid fa-trash-can text-lg"></i>
                             </button>
                         </div>
                     </div>
                     
                     <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
-                        <p id="questionText" class="text-3xl sm:text-4xl font-bold text-center leading-relaxed tracking-wide">
+                        <p id="questionText" class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
                             正在讀取題目...
                         </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-sm font-medium">
+                    <div class="text-center text-gray-400 text-xs font-medium">
                         點擊卡片查看答案
                     </div>
                 </div>
 
-                <!-- 卡片背面 (答案) -->
-                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[28px] md:rounded-[32px] p-6 sm:p-8 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
+                <!-- 卡片背面 (解答) -->
+                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
                     <div class="flex justify-between items-center text-emerald-400 text-sm font-medium">
-                        <span id="cardProgressBack">0/0</span>
+                        <span id="cardProgressBack" class="font-bold text-base text-emerald-300">0/0</span>
                         <div class="flex items-center gap-3">
+                            <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.answer)" title="朗讀解答" class="hover:text-emerald-300 transition p-1 text-emerald-400">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
                             <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
-                                <i class="fa-solid fa-pen-to-square text-base"></i>
+                                <i class="fa-solid fa-pen-to-square text-lg"></i>
                             </button>
                             <button onclick="event.stopPropagation(); openDeleteModal()" title="刪除此題" class="hover:text-red-400 transition p-1">
-                                <i class="fa-solid fa-trash-can text-base"></i>
+                                <i class="fa-solid fa-trash-can text-lg"></i>
                             </button>
                             <span class="bg-emerald-950/80 text-emerald-400 px-3 py-1 rounded-full text-xs border border-emerald-800 ml-1">解答</span>
                         </div>
                     </div>
                     
                     <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
-                        <p id="answerText" class="text-2xl sm:text-3xl font-bold text-center leading-relaxed text-emerald-100">
+                        <p id="answerText" class="text-2xl sm:text-3xl md:text-4xl font-bold text-center leading-snug text-emerald-200 w-full">
                             正在讀取答案...
                         </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-sm font-medium">
+                    <div class="text-center text-gray-400 text-xs font-medium">
                         點擊卡片翻回題目
                     </div>
                 </div>
@@ -329,6 +341,20 @@
             { rowIndex: 4, question: "社交工程攻擊中最常見的形式是什麼？", answer: "釣魚郵件 (Phishing Email)" },
             { rowIndex: 5, question: "HTTPS 中傳輸加密主要依賴哪種協定？", answer: "TLS (Transport Layer Security) / SSL" }
         ];
+
+        // 語音朗讀功能 (TTS)
+        function speakText(text) {
+            if (!text) return;
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // 停止先前的朗讀
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast('您的瀏覽器不支援語音朗讀', 'error');
+            }
+        }
 
         window.onload = function() {
             updateModeUI();
