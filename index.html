@@ -73,7 +73,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.5.0</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.5.1</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -337,13 +337,18 @@
                     <input id="apiUrlInput" type="url" required placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-gray-300 rounded-xl p-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 </div>
 
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="closeConfigModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">
-                        取消
+                <div class="flex justify-between gap-3 pt-2">
+                    <button type="button" onclick="resetApiConfig()" class="px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 text-xs font-semibold transition">
+                        重置為預設 API
                     </button>
-                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
-                        儲存並連線
-                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeConfigModal()" class="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">
+                            取消
+                        </button>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
+                            儲存並連線
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -404,12 +409,13 @@
     </div>
 
     <script>
-        let gasApiUrl = localStorage.getItem('gas_flashcard_api_url') || 'https://script.google.com/macros/s/AKfycbwsURro3ap2LUFtgJV_5Gomu_gZzf7yXUmGqRPSle0NTpUKma-xPtBlHFxPXca2oH3Y/exec';
+        const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwsURro3ap2LUFtgJV_5Gomu_gZzf7yXUmGqRPSle0NTpUKma-xPtBlHFxPXca2oH3Y/exec';
+        let gasApiUrl = localStorage.getItem('gas_flashcard_api_url') || DEFAULT_API_URL;
         let cards = [];
         let currentIndex = 0;
         let isFlipped = false;
         let isDualMode = true; // 預設同時顯示題目與答案
-        let isLoopMode = true; // 預設開啟循環學習模式 (最後一題後會回到第一題)
+        let isLoopMode = true; // 預設開啟循環學習模式
         let correctCount = 0;
         let wrongCount = 0;
         let currentMode = 'add';
@@ -427,7 +433,7 @@
         function speakText(text) {
             if (!text) return;
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 停止先前的朗讀
+                window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-TW';
                 utterance.rate = 1.0;
@@ -443,7 +449,7 @@
             if (gasApiUrl) {
                 fetchCardsFromAPI();
             } else {
-                cards = JSON.parse(JSON.stringify(mockCards));
+                cards = normalizeCardData(mockCards);
                 renderCard();
                 updateSyncStatus('demo', '示範模式 (點選⚙️設定API)');
             }
@@ -454,7 +460,7 @@
             isLoopMode = !isLoopMode;
             updateLoopUI();
             renderCard();
-            showToast(isLoopMode ? '已開啟「循環模式」（第一題與最後一題相連）' : '已切換為「單向模式」', 'info');
+            showToast(isLoopMode ? '已開啟「循環模式」' : '已切換為「單向模式」', 'info');
         }
 
         function updateLoopUI() {
@@ -500,6 +506,34 @@
             }
         }
 
+        // 相容性優化：自動格式化並統一卡片欄位名稱
+        function normalizeCardData(rawList) {
+            if (!Array.isArray(rawList)) return [];
+            return rawList.map((item, idx) => {
+                if (typeof item !== 'object' || item === null) return null;
+                
+                // 如果是陣列格式 [題目, 解答]
+                if (Array.isArray(item)) {
+                    return {
+                        rowIndex: idx + 2,
+                        question: String(item[0] || ''),
+                        answer: String(item[1] || '')
+                    };
+                }
+
+                // 如果是物件格式，支援多種常見命名機制 (question/answer, q/a, Q/A, 題目/答案)
+                const question = item.question || item.q || item.Q || item.Question || item.topic || item.title || item['題目'] || '';
+                const answer = item.answer || item.a || item.A || item.Answer || item.content || item['答案'] || item['解答'] || '';
+                const rowIndex = item.rowIndex || item.row || item.id || (idx + 2);
+
+                return {
+                    rowIndex: parseInt(rowIndex, 10) || (idx + 2),
+                    question: String(question),
+                    answer: String(answer)
+                };
+            }).filter(item => item !== null && (item.question || item.answer));
+        }
+
         function renderCard() {
             if (cards.length === 0) {
                 renderEmptyCard();
@@ -513,12 +547,10 @@
             const progressStr = `${currentIndex + 1} / ${cards.length}`;
 
             if (isDualMode) {
-                // 渲染同時顯示視圖
                 document.getElementById('dualQuestionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('dualAnswerText').innerText = card.answer || '（此題無解答）';
                 document.getElementById('dualCardProgress').innerHTML = `${progressStr} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
             } else {
-                // 渲染翻卡視圖
                 document.getElementById('questionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('answerText').innerText = card.answer || '（此題無解答）';
                 document.getElementById('cardProgressFront').innerHTML = `${progressStr} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
@@ -528,7 +560,6 @@
             document.getElementById('correctCount').innerText = correctCount;
             document.getElementById('wrongCount').innerText = wrongCount;
 
-            // 控制導覽按鈕啟用狀態 (若啟用循環模式則不鎖定)
             if (isLoopMode) {
                 document.getElementById('prevBtn').disabled = cards.length <= 1;
                 document.getElementById('nextBtn').disabled = cards.length <= 1;
@@ -538,27 +569,25 @@
             }
         }
 
-        // 下一題（支援最後一題自動回到第一題）
         function nextCard() {
             if (cards.length === 0) return;
             if (currentIndex < cards.length - 1) {
                 currentIndex++;
                 renderCard();
             } else if (isLoopMode) {
-                currentIndex = 0; // 循環回到第一題
+                currentIndex = 0;
                 renderCard();
                 showToast('已循環回到第 1 題', 'info');
             }
         }
 
-        // 上一題（支援第一題回到最後一題）
         function prevCard() {
             if (cards.length === 0) return;
             if (currentIndex > 0) {
                 currentIndex--;
                 renderCard();
             } else if (isLoopMode) {
-                currentIndex = cards.length - 1; // 循環回到最後一題
+                currentIndex = cards.length - 1;
                 renderCard();
                 showToast(`已循環回到第 ${cards.length} 題`, 'info');
             }
@@ -576,7 +605,7 @@
             
             const jumpInput = document.getElementById('jumpIndexInput');
             jumpInput.max = cards.length;
-            jumpInput.value = currentIndex + 1; // 預設帶入當前題號
+            jumpInput.value = currentIndex + 1;
 
             const modal = document.getElementById('jumpModal');
             const modalCard = document.getElementById('jumpModalCard');
@@ -611,7 +640,7 @@
                 return;
             }
 
-            currentIndex = val - 1; // 轉換為 0-indexed
+            currentIndex = val - 1;
             renderCard();
             closeJumpModal();
             showToast(`已跳轉至第 ${val} 題`, 'success');
@@ -644,6 +673,15 @@
             localStorage.setItem('gas_flashcard_api_url', gasApiUrl);
             closeConfigModal();
             showToast('API 網址設定已儲存', 'success');
+            fetchCardsFromAPI();
+        }
+
+        function resetApiConfig() {
+            gasApiUrl = DEFAULT_API_URL;
+            localStorage.removeItem('gas_flashcard_api_url');
+            document.getElementById('apiUrlInput').value = DEFAULT_API_URL;
+            showToast('已重置為預設 API 網址', 'info');
+            closeConfigModal();
             fetchCardsFromAPI();
         }
 
@@ -856,27 +894,53 @@
             });
         }
 
-        // 從 API 讀取字卡列表
+        // 從 API 讀取字卡列表（大幅擴充格式相容性）
         function fetchCardsFromAPI() {
             if (!gasApiUrl) return;
             updateSyncStatus('loading', '載入字卡中...');
-            fetch(gasApiUrl + '?action=read')
-                .then(res => res.json())
+            
+            // 避免快取影響，附加隨機時間戳記
+            const fetchUrl = gasApiUrl + (gasApiUrl.includes('?') ? '&' : '?') + 'action=read&_t=' + new Date().getTime();
+
+            fetch(fetchUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error(`HTTP 錯誤: ${res.status}`);
+                    return res.json();
+                })
                 .then(data => {
-                    if (data && Array.isArray(data.cards)) {
-                        cards = data.cards;
-                    } else if (Array.isArray(data)) {
-                        cards = data;
-                    } else {
-                        throw new Error('資料格式不符');
+                    let rawCards = [];
+                    
+                    // 嘗試從常見的各式 JSON 結構解構字卡陣列
+                    if (Array.isArray(data)) {
+                        rawCards = data;
+                    } else if (data && Array.isArray(data.cards)) {
+                        rawCards = data.cards;
+                    } else if (data && Array.isArray(data.data)) {
+                        rawCards = data.data;
+                    } else if (data && Array.isArray(data.result)) {
+                        rawCards = data.result;
+                    } else if (data && Array.isArray(data.items)) {
+                        rawCards = data.items;
+                    } else if (data && typeof data === 'object') {
+                        // 尋找 JSON 中第一個為陣列的屬性
+                        const foundKey = Object.keys(data).find(k => Array.isArray(data[k]));
+                        if (foundKey) rawCards = data[foundKey];
                     }
-                    currentIndex = 0;
-                    renderCard();
-                    updateSyncStatus('success', `已載入 ${cards.length} 題`);
+
+                    const parsedCards = normalizeCardData(rawCards);
+
+                    if (parsedCards.length > 0) {
+                        cards = parsedCards;
+                        currentIndex = 0;
+                        renderCard();
+                        updateSyncStatus('success', `已載入 ${cards.length} 題`);
+                    } else {
+                        throw new Error('未解析到有效字卡資料');
+                    }
                 })
                 .catch(err => {
-                    console.warn('API 載入失敗，使用預設資料:', err);
-                    cards = JSON.parse(JSON.stringify(mockCards));
+                    console.warn('API 載入失敗，詳細原因:', err);
+                    cards = normalizeCardData(mockCards);
                     currentIndex = 0;
                     renderCard();
                     updateSyncStatus('demo', '連線失敗，使用預設資料');
@@ -924,7 +988,7 @@
             document.getElementById('nextBtn').disabled = true;
         }
 
-        // 卡片翻轉 logic
+        // 卡片翻轉邏輯
         function flipCard() {
             if (cards.length === 0) return;
             isFlipped = !isFlipped;
@@ -936,7 +1000,7 @@
             }
         }
 
-        // 點擊主卡片區域處理 (雙顯模式點擊左右分區切換，翻卡模式進行翻面)
+        // 點擊主卡片區域處理
         function handleCardClick(e) {
             if (cards.length === 0) return;
             if (isDualMode) {
