@@ -9,7 +9,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
         
         body {
             font-family: 'Noto Sans TC', sans-serif;
@@ -47,6 +47,16 @@
         .click-zone-right:hover {
             background: linear-gradient(to left, rgba(255,255,255,0.06), transparent);
         }
+
+        /* 可點擊進度標籤效果 */
+        .progress-badge-clickable {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .progress-badge-clickable:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-4 md:p-8 relative">
@@ -59,29 +69,41 @@
         </div>
     </div>
 
-    <!-- 頂部標題列 -->
+    <!-- 頂部標題列與操作選單 -->
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.4</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.3.0</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
         </div>
         
         <!-- 操作選單按鈕區 -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5 sm:space-x-2 flex-wrap">
+            <!-- 指定題號 / 跳題按鈕 -->
+            <button onclick="openJumpModal()" title="選擇題號/起始題號" class="bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-amber-200 btn-active">
+                <i class="fa-solid fa-list-ol"></i>
+                <span class="hidden sm:inline">跳題/選題</span>
+            </button>
+
+            <!-- 循環模式切換按鈕 -->
+            <button onclick="toggleLoopMode()" id="loopToggleBtn" title="開啟/關閉循環學習 (第一題<->最後一題)" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-emerald-200 btn-active">
+                <i class="fa-solid fa-repeat" id="loopIcon"></i>
+                <span id="loopText" class="hidden sm:inline">循環開啟</span>
+            </button>
+
             <!-- 模式切換按鈕 -->
-            <button onclick="toggleDisplayMode()" id="modeToggleBtn" title="切換顯示模式" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs md:text-sm font-medium px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-indigo-200 btn-active">
+            <button onclick="toggleDisplayMode()" id="modeToggleBtn" title="切換顯示模式" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-indigo-200 btn-active">
                 <i class="fa-solid fa-table-columns" id="modeIcon"></i>
-                <span id="modeText">同時顯示</span>
+                <span id="modeText" class="hidden sm:inline">同時顯示</span>
             </button>
             <button onclick="openConfigModal()" title="設定 API 網址" class="p-2 rounded-full hover:bg-gray-200 text-gray-600 transition">
                 <i class="fa-solid fa-gear text-lg"></i>
             </button>
-            <button onclick="openFormModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition btn-active">
+            <button onclick="openFormModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium px-3 py-1.5 sm:py-2 rounded-xl flex items-center gap-1.5 shadow-md transition btn-active">
                 <i class="fa-solid fa-plus"></i>
-                <span>新增題目</span>
+                <span>新增</span>
             </button>
             <button onclick="shuffleCards()" title="隨機洗牌" class="p-2 rounded-full hover:bg-gray-200 text-gray-600 transition">
                 <i class="fa-solid fa-shuffle"></i>
@@ -94,13 +116,15 @@
 
     <!-- 主卡片區塊 -->
     <main class="w-full max-w-2xl flex-1 flex flex-col justify-center items-center my-1 sm:my-auto w-full">
-        <div id="cardContainer" class="w-full h-[calc(100vh-170px)] sm:h-[calc(100vh-160px)] min-h-[380px] max-h-[680px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
+        <div id="cardContainer" class="w-full h-[calc(100vh-160px)] min-h-[480px] max-h-[680px] perspective-1000 cursor-pointer relative" onclick="handleCardClick(event)">
             
             <!-- 1. 同時顯示模式容器 (預設) -->
-            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-3 sm:p-5 md:p-6 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
+            <div id="dualViewContainer" class="w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-3 sm:p-5 md:p-6 flex flex-col justify-between shadow-2xl border border-gray-700 relative overflow-hidden">
                 <!-- 頂部資訊與管理按鈕 -->
                 <div class="flex justify-between items-center text-gray-400 text-sm font-medium z-10 px-1 pt-1 shrink-0">
-                    <span id="dualCardProgress" class="font-bold text-base text-gray-300">0/0</span>
+                    <span id="dualCardProgress" onclick="event.stopPropagation(); openJumpModal();" title="點擊切換題號" class="font-bold text-base text-gray-300 bg-gray-800/80 hover:bg-gray-700 text-blue-300 px-3 py-1 rounded-full border border-gray-600 progress-badge-clickable">
+                        0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
+                    </span>
                     <div class="flex items-center gap-3">
                         <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
                             <i class="fa-solid fa-volume-high text-lg"></i>
@@ -115,24 +139,22 @@
                     </div>
                 </div>
 
-                <!-- 題目與解答整合區域（採用安全垂直置中與大字體結構） -->
-                <div class="flex-1 w-full overflow-y-auto px-2 sm:px-3 z-10 my-1">
-                    <div class="min-h-full flex flex-col justify-center items-center gap-5 sm:gap-7 py-3 w-full">
-                        <!-- 題目區塊 -->
-                        <div class="w-full flex flex-col justify-center items-center text-center">
-                            <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-1.5 sm:mb-2">題目</span>
-                            <p id="dualQuestionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
-                                正在讀取題目...
-                            </p>
-                        </div>
+                <!-- 題目與解答整合區域 -->
+                <div class="flex-1 flex flex-col justify-center items-center gap-6 sm:gap-8 md:gap-10 px-3 z-10 py-4 w-full my-auto overflow-y-auto">
+                    <!-- 題目區塊 -->
+                    <div class="w-full flex flex-col justify-center items-center text-center">
+                        <span class="text-xs sm:text-sm font-bold text-blue-400 uppercase tracking-widest mb-2">題目</span>
+                        <p id="dualQuestionText" class="text-3xl md:text-3xl lg:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
+                            正在讀取題目...
+                        </p>
+                    </div>
 
-                        <!-- 解答區塊 -->
-                        <div class="w-full flex flex-col justify-center items-center text-center">
-                            <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-1.5 sm:mb-2">解答</span>
-                            <p id="dualAnswerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-relaxed text-emerald-300 w-full">
-                                正在讀取答案...
-                            </p>
-                        </div>
+                    <!-- 解答區塊 -->
+                    <div class="w-full flex flex-col justify-center items-center text-center">
+                        <span class="text-xs sm:text-sm font-bold text-emerald-400 uppercase tracking-widest mb-2">解答</span>
+                        <p id="dualAnswerText" class="text-2xl md:text-2xl lg:text-3xl font-bold text-center leading-relaxed text-emerald-300 w-full">
+                            正在讀取答案...
+                        </p>
                     </div>
                 </div>
 
@@ -142,7 +164,7 @@
                     <span>點擊右側：下一題<i class="fa-solid fa-chevron-right ml-1"></i></span>
                 </div>
 
-                <!-- 左右點擊區域微光 hover 提示 overlay -->
+                <!-- 左右點擊區域 hover 提示 overlay -->
                 <div class="absolute inset-y-0 left-0 w-1/2 click-zone-left pointer-events-none transition-all flex items-center justify-start pl-2 group">
                     <i class="fa-solid fa-chevron-left text-white/15 text-xl group-hover:text-white/50 transition"></i>
                 </div>
@@ -151,13 +173,15 @@
                 </div>
             </div>
 
-            <!-- 2. 翻卡模式容器 (隱藏/切換用) -->
-            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[24px] sm:rounded-[28px] md:rounded-[32px] hidden">
+            <!-- 2. 翻卡模式容器 -->
+            <div id="cardInner" class="relative w-full h-full transform-style-3d shadow-2xl rounded-[28px] md:rounded-[32px] hidden">
                 
                 <!-- 卡片正面 (題目) -->
-                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-7 flex flex-col justify-between backface-hidden border border-gray-700">
-                    <div class="flex justify-between items-center text-gray-400 text-sm font-medium shrink-0">
-                        <span id="cardProgressFront" class="font-bold text-base text-gray-300">0/0</span>
+                <div class="absolute inset-0 w-full h-full bg-[#2c2c2e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden border border-gray-700">
+                    <div class="flex justify-between items-center text-gray-400 text-sm font-medium">
+                        <span id="cardProgressFront" onclick="event.stopPropagation(); openJumpModal();" title="點擊切換題號" class="font-bold text-base text-gray-300 bg-gray-800/80 hover:bg-gray-700 text-blue-300 px-3 py-1 rounded-full border border-gray-600 progress-badge-clickable">
+                            0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
+                        </span>
                         <div class="flex items-center gap-3">
                             <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
                                 <i class="fa-solid fa-volume-high text-lg"></i>
@@ -171,23 +195,23 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 w-full overflow-y-auto px-2 my-2">
-                        <div class="min-h-full flex items-center justify-center">
-                            <p id="questionText" class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-center leading-snug tracking-tight text-white w-full">
-                                正在讀取題目...
-                            </p>
-                        </div>
+                    <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
+                        <p id="questionText" class="text-3xl md:text-3xl lg:text-4xl font-extrabold text-center leading-tight tracking-tight text-white w-full">
+                            正在讀取題目...
+                        </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-xs font-medium shrink-0">
+                    <div class="text-center text-gray-400 text-xs font-medium">
                         點擊卡片查看答案
                     </div>
                 </div>
 
                 <!-- 卡片背面 (解答) -->
-                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[24px] sm:rounded-[28px] md:rounded-[32px] p-4 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
-                    <div class="flex justify-between items-center text-emerald-400 text-sm font-medium shrink-0">
-                        <span id="cardProgressBack" class="font-bold text-base text-emerald-300">0/0</span>
+                <div class="absolute inset-0 w-full h-full bg-[#1c1c1e] text-white rounded-[28px] md:rounded-[32px] p-5 sm:p-7 flex flex-col justify-between backface-hidden rotate-y-180 border border-emerald-900/50">
+                    <div class="flex justify-between items-center text-emerald-400 text-sm font-medium">
+                        <span id="cardProgressBack" onclick="event.stopPropagation(); openJumpModal();" title="點擊切換題號" class="font-bold text-base text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 px-3 py-1 rounded-full border border-emerald-800 progress-badge-clickable">
+                            0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
+                        </span>
                         <div class="flex items-center gap-3">
                             <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.answer)" title="朗讀解答" class="hover:text-emerald-300 transition p-1 text-emerald-400">
                                 <i class="fa-solid fa-volume-high text-lg"></i>
@@ -202,15 +226,13 @@
                         </div>
                     </div>
                     
-                    <div class="flex-1 w-full overflow-y-auto px-2 my-2">
-                        <div class="min-h-full flex items-center justify-center">
-                            <p id="answerText" class="text-xl sm:text-2xl md:text-3xl font-bold text-center leading-relaxed text-emerald-200 w-full">
-                                正在讀取答案...
-                            </p>
-                        </div>
+                    <div class="flex-1 flex justify-center items-center my-2 overflow-y-auto px-2">
+                        <p id="answerText" class="text-2xl md:text-2xl lg:text-3xl font-bold text-center leading-relaxed text-emerald-200 w-full">
+                            正在讀取答案...
+                        </p>
                     </div>
                     
-                    <div class="text-center text-gray-400 text-xs font-medium shrink-0">
+                    <div class="text-center text-gray-400 text-xs font-medium">
                         點擊卡片翻回題目
                     </div>
                 </div>
@@ -244,7 +266,58 @@
         </button>
     </footer>
 
-    <!-- 1. API 網址設定彈窗 (Config Modal) -->
+    <!-- 1. 選擇起始題號 / 跳題彈窗 (Jump Modal) -->
+    <div id="jumpModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl transition-all transform scale-95 opacity-0" id="jumpModalCard">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 rounded-full bg-amber-100 text-amber-600 flex justify-center items-center font-bold">
+                        <i class="fa-solid fa-list-ol"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">選擇起始題號 / 跳題</h3>
+                </div>
+                <button onclick="closeJumpModal()" class="text-gray-400 hover:text-gray-600 p-1 transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <p class="text-sm text-gray-500 mb-4">
+                請輸入欲開始練習或跳轉的題號（目前總共 <span id="jumpModalTotalCount" class="font-bold text-amber-600">0</span> 題）：
+            </p>
+
+            <form onsubmit="handleJumpSubmit(event)" class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <label class="text-sm font-semibold text-gray-700 whitespace-nowrap">從第</label>
+                    <input id="jumpIndexInput" type="number" min="1" required class="w-full border border-gray-300 rounded-xl p-3 text-center text-lg font-bold text-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" placeholder="1">
+                    <label class="text-sm font-semibold text-gray-700 whitespace-nowrap">題開始</label>
+                </div>
+
+                <!-- 快速選擇按鈕 -->
+                <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="setJumpInputValue(1)" class="flex-1 py-1.5 bg-gray-100 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 text-xs font-semibold rounded-lg text-gray-600 transition">
+                        第一題 (1)
+                    </button>
+                    <button type="button" onclick="setJumpInputValue(Math.ceil(cards.length / 2))" class="flex-1 py-1.5 bg-gray-100 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 text-xs font-semibold rounded-lg text-gray-600 transition">
+                        中間題 (<span id="jumpMiddleNum">0</span>)
+                    </button>
+                    <button type="button" onclick="setJumpInputValue(cards.length)" class="flex-1 py-1.5 bg-gray-100 hover:bg-amber-50 hover:text-amber-700 border border-gray-200 text-xs font-semibold rounded-lg text-gray-600 transition">
+                        最後一題 (<span id="jumpLastNum">0</span>)
+                    </button>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t border-gray-100">
+                    <button type="button" onclick="closeJumpModal()" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-600 font-medium hover:bg-gray-100 transition">
+                        取消
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-medium transition shadow-md">
+                        確認跳轉
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. API 網址設定彈窗 (Config Modal) -->
     <div id="configModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
         <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl transition-all transform scale-95 opacity-0" id="configModalCard">
             <div class="flex justify-between items-center mb-4">
@@ -276,7 +349,7 @@
         </div>
     </div>
 
-    <!-- 2. 新增 / 編輯彈窗 (Form Modal) -->
+    <!-- 3. 新增 / 編輯彈窗 (Form Modal) -->
     <div id="formModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
         <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl transition-all transform scale-95 opacity-0" id="formModalCard">
             <div class="flex justify-between items-center mb-4">
@@ -309,7 +382,7 @@
         </div>
     </div>
 
-    <!-- 3. 刪除確認彈窗 (Delete Modal) -->
+    <!-- 4. 刪除確認彈窗 (Delete Modal) -->
     <div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
         <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl transition-all transform scale-95 opacity-0 text-center" id="deleteModalCard">
             <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex justify-center items-center mx-auto mb-3 text-xl">
@@ -337,6 +410,7 @@
         let currentIndex = 0;
         let isFlipped = false;
         let isDualMode = true; // 預設同時顯示題目與答案
+        let isLoopMode = true; // 預設開啟循環學習模式 (最後一題後會回到第一題)
         let correctCount = 0;
         let wrongCount = 0;
         let currentMode = 'add';
@@ -346,7 +420,8 @@
             { rowIndex: 2, question: "為了降低受攻擊面，應停用 Windows 的哪種腳本宿主功能？", answer: "Windows Script Host (WSH)" },
             { rowIndex: 3, question: "什麼是雙因素驗證 (2FA)？", answer: "結合兩種不同類型的機制（如密碼 + 手機驗證碼）來驗證使用者身分。" },
             { rowIndex: 4, question: "社交工程攻擊中最常見的形式是什麼？", answer: "釣魚郵件 (Phishing Email)" },
-            { rowIndex: 5, question: "HTTPS 中傳輸加密主要依賴哪種協定？", answer: "TLS (Transport Layer Security) / SSL" }
+            { rowIndex: 5, question: "HTTPS 中傳輸加密主要依賴哪種協定？", answer: "TLS (Transport Layer Security) / SSL" },
+            { rowIndex: 6, question: "零信任架構 (Zero Trust) 的核心原則是什麼？", answer: "永不信任，始終驗證 (Never Trust, Always Verify)。" }
         ];
 
         // 語音朗讀功能 (TTS)
@@ -365,6 +440,7 @@
 
         window.onload = function() {
             updateModeUI();
+            updateLoopUI();
             if (gasApiUrl) {
                 fetchCardsFromAPI();
             } else {
@@ -389,15 +465,39 @@
             const cardInner = document.getElementById('cardInner');
 
             if (isDualMode) {
-                modeText.innerText = '同時顯示';
-                modeIcon.className = 'fa-solid fa-table-columns';
+                if (modeText) modeText.innerText = '同時顯示';
+                if (modeIcon) modeIcon.className = 'fa-solid fa-table-columns';
                 dualView.classList.remove('hidden');
                 cardInner.classList.add('hidden');
             } else {
-                modeText.innerText = '翻卡模式';
-                modeIcon.className = 'fa-solid fa-rotate';
+                if (modeText) modeText.innerText = '翻卡模式';
+                if (modeIcon) modeIcon.className = 'fa-solid fa-rotate';
                 dualView.classList.add('hidden');
                 cardInner.classList.remove('hidden');
+            }
+        }
+
+        function toggleLoopMode() {
+            isLoopMode = !isLoopMode;
+            updateLoopUI();
+            renderCard();
+            showToast(isLoopMode ? '已開啟「循環模式」（第一題與最後一題相連）' : '已切換為「單向模式」', 'info');
+        }
+
+        function updateLoopUI() {
+            const loopText = document.getElementById('loopText');
+            const loopToggleBtn = document.getElementById('loopToggleBtn');
+
+            if (isLoopMode) {
+                if (loopText) loopText.innerText = '循環開啟';
+                if (loopToggleBtn) {
+                    loopToggleBtn.className = 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-emerald-200 btn-active';
+                }
+            } else {
+                if (loopText) loopText.innerText = '循環關閉';
+                if (loopToggleBtn) {
+                    loopToggleBtn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-gray-300 btn-active';
+                }
             }
         }
 
@@ -490,26 +590,32 @@
             document.getElementById('cardInner').classList.remove('rotate-y-180');
 
             const card = cards[currentIndex];
-            const progressStr = `${currentIndex + 1}/${cards.length}`;
+            const progressStr = `${currentIndex + 1} / ${cards.length}`;
 
             if (isDualMode) {
                 // 渲染同時顯示視圖
                 document.getElementById('dualQuestionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('dualAnswerText').innerText = card.answer || '（此題無解答）';
-                document.getElementById('dualCardProgress').innerText = progressStr;
+                document.getElementById('dualCardProgress').innerHTML = `${progressStr} <i class="fa-solid fa-arrow-right-to-bracket text-xs ml-1 opacity-70"></i>`;
             } else {
                 // 渲染翻卡視圖
                 document.getElementById('questionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('answerText').innerText = card.answer || '（此題無解答）';
-                document.getElementById('cardProgressFront').innerText = progressStr;
-                document.getElementById('cardProgressBack').innerText = progressStr;
+                document.getElementById('cardProgressFront').innerHTML = `${progressStr} <i class="fa-solid fa-arrow-right-to-bracket text-xs ml-1 opacity-70"></i>`;
+                document.getElementById('cardProgressBack').innerHTML = `${progressStr} <i class="fa-solid fa-arrow-right-to-bracket text-xs ml-1 opacity-70"></i>`;
             }
 
             document.getElementById('correctCount').innerText = correctCount;
             document.getElementById('wrongCount').innerText = wrongCount;
 
-            document.getElementById('prevBtn').disabled = currentIndex === 0;
-            document.getElementById('nextBtn').disabled = currentIndex === cards.length - 1;
+            // 控制導覽按鈕啟用狀態 (若啟用循環模式則不鎖定)
+            if (isLoopMode) {
+                document.getElementById('prevBtn').disabled = cards.length <= 1;
+                document.getElementById('nextBtn').disabled = cards.length <= 1;
+            } else {
+                document.getElementById('prevBtn').disabled = currentIndex === 0;
+                document.getElementById('nextBtn').disabled = currentIndex === cards.length - 1;
+            }
         }
 
         function renderEmptyCard() {
@@ -521,12 +627,12 @@
             
             document.getElementById('dualQuestionText').innerText = emptyMsg;
             document.getElementById('dualAnswerText').innerText = emptyAns;
-            document.getElementById('dualCardProgress').innerText = "0/0";
+            document.getElementById('dualCardProgress').innerText = "0 / 0";
 
             document.getElementById('questionText').innerText = emptyMsg;
             document.getElementById('answerText').innerText = emptyAns;
-            document.getElementById('cardProgressFront').innerText = "0/0";
-            document.getElementById('cardProgressBack').innerText = "0/0";
+            document.getElementById('cardProgressFront').innerText = "0 / 0";
+            document.getElementById('cardProgressBack').innerText = "0 / 0";
 
             document.getElementById('prevBtn').disabled = true;
             document.getElementById('nextBtn').disabled = true;
@@ -543,17 +649,29 @@
             }
         }
 
+        // 下一題（支援最後一題回到第一題）
         function nextCard() {
+            if (cards.length === 0) return;
             if (currentIndex < cards.length - 1) {
                 currentIndex++;
                 renderCard();
+            } else if (isLoopMode) {
+                currentIndex = 0; // 循環回到第一題
+                renderCard();
+                showToast('已循環回到第 1 題', 'info');
             }
         }
 
+        // 上一題（支援第一題回到最後一題）
         function prevCard() {
+            if (cards.length === 0) return;
             if (currentIndex > 0) {
                 currentIndex--;
                 renderCard();
+            } else if (isLoopMode) {
+                currentIndex = cards.length - 1; // 循環回到最後一題
+                renderCard();
+                showToast(`已循環回到第 ${cards.length} 題`, 'info');
             }
         }
 
@@ -562,11 +680,7 @@
             if (isCorrect) correctCount++;
             else wrongCount++;
 
-            if (currentIndex < cards.length - 1) {
-                nextCard();
-            } else {
-                renderCard();
-            }
+            nextCard();
         }
 
         function shuffleCards() {
@@ -586,6 +700,60 @@
             wrongCount = 0;
             renderCard();
             showToast('已重置閱讀與答題進度', 'info');
+        }
+
+        // 選擇起始題號 / 跳題彈窗處理
+        function openJumpModal() {
+            if (cards.length === 0) {
+                showToast('目前尚無卡片可跳轉', 'error');
+                return;
+            }
+
+            document.getElementById('jumpModalTotalCount').innerText = cards.length;
+            document.getElementById('jumpMiddleNum').innerText = Math.ceil(cards.length / 2);
+            document.getElementById('jumpLastNum').innerText = cards.length;
+            
+            const jumpInput = document.getElementById('jumpIndexInput');
+            jumpInput.max = cards.length;
+            jumpInput.value = currentIndex + 1; // 預設帶入當前題號
+
+            const modal = document.getElementById('jumpModal');
+            const modalCard = document.getElementById('jumpModalCard');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalCard.classList.remove('scale-95', 'opacity-0');
+                modalCard.classList.add('scale-100', 'opacity-100');
+                jumpInput.focus();
+                jumpInput.select();
+            }, 10);
+        }
+
+        function closeJumpModal() {
+            const modal = document.getElementById('jumpModal');
+            const modalCard = document.getElementById('jumpModalCard');
+            modalCard.classList.remove('scale-100', 'opacity-100');
+            modalCard.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        function setJumpInputValue(num) {
+            if (!num || cards.length === 0) return;
+            const target = Math.max(1, Math.min(cards.length, num));
+            document.getElementById('jumpIndexInput').value = target;
+        }
+
+        function handleJumpSubmit(e) {
+            e.preventDefault();
+            const val = parseInt(document.getElementById('jumpIndexInput').value, 10);
+            if (isNaN(val) || val < 1 || val > cards.length) {
+                showToast(`請輸入 1 至 ${cards.length} 之間的有效題號`, 'error');
+                return;
+            }
+
+            currentIndex = val - 1; // 轉換為 0-indexed
+            renderCard();
+            closeJumpModal();
+            showToast(`已跳轉至第 ${val} 題`, 'success');
         }
 
         function openConfigModal() {
