@@ -40,12 +40,12 @@
             transform: scale(0.95);
         }
 
-        /* 同時顯示模式左右點擊區域 Hover 效果 */
-        .click-zone-left:hover {
-            background: linear-gradient(to right, rgba(255,255,255,0.06), transparent);
+        /* 同時顯示模式上下點擊區域 Hover 效果 */
+        .click-zone-top:hover {
+            background: linear-gradient(to bottom, rgba(255,255,255,0.06), transparent);
         }
-        .click-zone-right:hover {
-            background: linear-gradient(to left, rgba(255,255,255,0.06), transparent);
+        .click-zone-bottom:hover {
+            background: linear-gradient(to top, rgba(255,255,255,0.06), transparent);
         }
 
         /* 可點擊進度標籤效果 */
@@ -73,7 +73,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.6.0</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.8.0</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -81,6 +81,12 @@
         
         <!-- 操作選單按鈕區 -->
         <div class="flex items-center space-x-1.5 sm:space-x-2 flex-wrap">
+            <!-- 顯示/隱藏已排除題目切換按鈕 -->
+            <button onclick="toggleShowExcluded()" id="showExcludedToggleBtn" title="顯示/隱藏已排除題目" class="bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-purple-200 btn-active">
+                <i class="fa-solid fa-eye-slash" id="showExcludedIcon"></i>
+                <span id="showExcludedText" class="hidden sm:inline">隱藏已排除</span>
+            </button>
+
             <!-- 指定題號 / 起始題號跳轉按鈕 -->
             <button onclick="openJumpModal()" title="選擇題號/起始題號" class="bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-amber-200 btn-active">
                 <i class="fa-solid fa-list-ol"></i>
@@ -126,7 +132,7 @@
                         0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
                     </span>
                     <div class="flex items-center gap-3">
-                        <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
+                        <button onclick="event.stopPropagation(); speakText(getFilteredCards()[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
                             <i class="fa-solid fa-volume-high text-lg"></i>
                         </button>
                         <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
@@ -160,16 +166,16 @@
 
                 <!-- 底部提示區塊 -->
                 <div class="text-center text-gray-400 text-xs font-medium z-10 flex justify-between px-2 pt-2 border-t border-gray-800/80 shrink-0">
-                    <span><i class="fa-solid fa-chevron-left mr-1"></i>點擊左側：上一題</span>
-                    <span>點擊右側：下一題<i class="fa-solid fa-chevron-right ml-1"></i></span>
+                    <span><i class="fa-solid fa-chevron-up mr-1"></i>點擊上半部：上一題</span>
+                    <span>點擊下半部：下一題<i class="fa-solid fa-chevron-down ml-1"></i></span>
                 </div>
 
-                <!-- 左右點擊區域 hover 提示 overlay -->
-                <div class="absolute inset-y-0 left-0 w-1/2 click-zone-left pointer-events-none transition-all flex items-center justify-start pl-2 group">
-                    <i class="fa-solid fa-chevron-left text-white/15 text-xl group-hover:text-white/50 transition"></i>
+                <!-- 上下點擊區域 hover 提示 overlay -->
+                <div class="absolute inset-x-0 top-0 h-1/2 click-zone-top pointer-events-none transition-all flex items-start justify-center pt-2 group">
+                    <i class="fa-solid fa-chevron-up text-white/15 text-xl group-hover:text-white/50 transition"></i>
                 </div>
-                <div class="absolute inset-y-0 right-0 w-1/2 click-zone-right pointer-events-none transition-all flex items-center justify-end pr-2 group">
-                    <i class="fa-solid fa-chevron-right text-white/15 text-xl group-hover:text-white/50 transition"></i>
+                <div class="absolute inset-x-0 bottom-0 h-1/2 click-zone-bottom pointer-events-none transition-all flex items-end justify-center pb-2 group">
+                    <i class="fa-solid fa-chevron-down text-white/15 text-xl group-hover:text-white/50 transition"></i>
                 </div>
             </div>
 
@@ -183,7 +189,7 @@
                             0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
                         </span>
                         <div class="flex items-center gap-3">
-                            <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
+                            <button onclick="event.stopPropagation(); speakText(getFilteredCards()[currentIndex]?.question)" title="朗讀題目" class="hover:text-blue-400 transition p-1 text-gray-300">
                                 <i class="fa-solid fa-volume-high text-lg"></i>
                             </button>
                             <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
@@ -213,7 +219,7 @@
                             0/0 <i class="fa-solid fa-pen-to-square text-xs ml-1 opacity-70"></i>
                         </span>
                         <div class="flex items-center gap-3">
-                            <button onclick="event.stopPropagation(); speakText(cards[currentIndex]?.answer)" title="朗讀解答" class="hover:text-emerald-300 transition p-1 text-emerald-400">
+                            <button onclick="event.stopPropagation(); speakText(getFilteredCards()[currentIndex]?.answer)" title="朗讀解答" class="hover:text-emerald-300 transition p-1 text-emerald-400">
                                 <i class="fa-solid fa-volume-high text-lg"></i>
                             </button>
                             <button onclick="event.stopPropagation(); openFormModal('edit')" title="編輯此題" class="hover:text-blue-400 transition p-1">
@@ -248,16 +254,10 @@
             <i class="fa-solid fa-arrow-left text-xl"></i>
         </button>
 
-        <!-- ✕ 不熟悉/錯誤統計 -->
-        <button onclick="markCard(false)" class="btn-active min-w-[90px] h-12 px-5 rounded-full bg-white border border-gray-200 text-red-500 hover:bg-red-50 flex justify-center items-center gap-2 shadow-md transition font-semibold text-base">
-            <i class="fa-solid fa-xmark text-lg"></i>
-            <span id="wrongCount">0</span>
-        </button>
-
-        <!-- ✓ 已掌握/正確統計 -->
-        <button onclick="markCard(true)" class="btn-active min-w-[90px] h-12 px-5 rounded-full bg-white border border-gray-200 text-emerald-600 hover:bg-emerald-50 flex justify-center items-center gap-2 shadow-md transition font-semibold text-base">
-            <span id="correctCount">0</span>
-            <i class="fa-solid fa-check text-lg"></i>
+        <!-- 排除 / 復原按鈕 -->
+        <button id="excludeBtn" onclick="toggleExcludeCurrentCard()" class="btn-active min-w-[140px] h-12 px-5 rounded-full bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 flex justify-center items-center gap-2 shadow-md transition font-semibold text-base">
+            <i id="excludeBtnIcon" class="fa-solid fa-eye-slash text-lg"></i>
+            <span id="excludeBtnText">排除此題</span>
         </button>
 
         <!-- 下一題 -->
@@ -416,9 +416,35 @@
         let isFlipped = false;
         let isDualMode = true; // 預設同時顯示題目與答案
         let isLoopMode = true; // 預設開啟循環學習模式
-        let correctCount = 0;
-        let wrongCount = 0;
         let currentMode = 'add';
+
+        // 已排除題目狀態與顯示切換
+        let excludedIds = new Set();
+        let showExcluded = false;
+
+        function getCardKey(card) {
+            if (!card) return null;
+            return card.rowIndex !== undefined ? 'row_' + card.rowIndex : 'q_' + card.question;
+        }
+
+        function loadExcludedState() {
+            try {
+                const saved = localStorage.getItem('flashcard_excluded_ids');
+                excludedIds = new Set(saved ? JSON.parse(saved) : []);
+            } catch (e) {
+                excludedIds = new Set();
+            }
+            showExcluded = localStorage.getItem('flashcard_show_excluded') === 'true';
+        }
+
+        function saveExcludedState() {
+            localStorage.setItem('flashcard_excluded_ids', JSON.stringify(Array.from(excludedIds)));
+            localStorage.setItem('flashcard_show_excluded', showExcluded);
+        }
+
+        function getFilteredCards() {
+            return cards.filter(c => showExcluded || !excludedIds.has(getCardKey(c)));
+        }
 
         // 本地離線預設資料
         const mockCards = [
@@ -444,6 +470,8 @@
         }
 
         window.onload = function() {
+            loadExcludedState();
+            updateShowExcludedUI();
             updateModeUI();
             updateLoopUI();
             if (gasApiUrl) {
@@ -460,13 +488,11 @@
         // 載入上次儲存的題號位置
         function loadSavedIndex() {
             const saved = localStorage.getItem('flashcard_saved_index');
+            const activeCards = getFilteredCards();
             if (saved !== null) {
                 const idx = parseInt(saved, 10);
-                if (!isNaN(idx) && idx >= 0 && idx < cards.length) {
+                if (!isNaN(idx) && idx >= 0 && idx < activeCards.length) {
                     currentIndex = idx;
-                    if (idx > 0) {
-                        showToast(`已自動恢復至上次第 ${idx + 1} 題`, 'info');
-                    }
                 } else {
                     currentIndex = 0;
                 }
@@ -497,6 +523,66 @@
                     loopToggleBtn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-gray-300 btn-active';
                 }
             }
+        }
+
+        function toggleShowExcluded() {
+            showExcluded = !showExcluded;
+            saveExcludedState();
+            updateShowExcludedUI();
+
+            const activeCards = getFilteredCards();
+            if (currentIndex >= activeCards.length) {
+                currentIndex = Math.max(0, activeCards.length - 1);
+            }
+            renderCard();
+            showToast(showExcluded ? '已切換為：顯示已排除題目' : '已切換為：隱藏已排除題目', 'info');
+        }
+
+        function updateShowExcludedUI() {
+            const btn = document.getElementById('showExcludedToggleBtn');
+            const icon = document.getElementById('showExcludedIcon');
+            const text = document.getElementById('showExcludedText');
+            const count = excludedIds.size;
+
+            if (btn && icon && text) {
+                if (showExcluded) {
+                    btn.className = 'bg-purple-100 text-purple-800 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-purple-300 btn-active';
+                    icon.className = 'fa-solid fa-eye text-purple-700';
+                    text.innerText = `顯示已排除 (${count})`;
+                } else {
+                    btn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs md:text-sm font-medium px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition border border-gray-300 btn-active';
+                    icon.className = 'fa-solid fa-eye-slash text-gray-500';
+                    text.innerText = `隱藏已排除 (${count})`;
+                }
+            }
+        }
+
+        function toggleExcludeCurrentCard() {
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) return;
+
+            const card = activeCards[currentIndex];
+            const key = getCardKey(card);
+            if (!key) return;
+
+            if (excludedIds.has(key)) {
+                excludedIds.delete(key);
+                saveExcludedState();
+                showToast('已取消排除此題', 'info');
+            } else {
+                excludedIds.add(key);
+                saveExcludedState();
+                showToast('已將此題列為已排除', 'success');
+
+                if (!showExcluded) {
+                    const newActive = getFilteredCards();
+                    if (currentIndex >= newActive.length) {
+                        currentIndex = Math.max(0, newActive.length - 1);
+                    }
+                }
+            }
+            updateShowExcludedUI();
+            renderCard();
         }
 
         function toggleDisplayMode() {
@@ -531,7 +617,6 @@
             return rawList.map((item, idx) => {
                 if (typeof item !== 'object' || item === null) return null;
                 
-                // 如果是陣列格式 [題目, 解答]
                 if (Array.isArray(item)) {
                     return {
                         rowIndex: idx + 2,
@@ -540,7 +625,6 @@
                     };
                 }
 
-                // 如果是物件格式，支援多種常見命名機制 (question/answer, q/a, Q/A, 題目/答案)
                 const question = item.question || item.q || item.Q || item.Question || item.topic || item.title || item['題目'] || '';
                 const answer = item.answer || item.a || item.A || item.Answer || item.content || item['答案'] || item['解答'] || '';
                 const rowIndex = item.rowIndex || item.row || item.id || (idx + 2);
@@ -554,9 +638,14 @@
         }
 
         function renderCard() {
-            if (cards.length === 0) {
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) {
                 renderEmptyCard();
                 return;
+            }
+
+            if (currentIndex >= activeCards.length) {
+                currentIndex = Math.max(0, activeCards.length - 1);
             }
 
             // 自動儲存當前觀看的題號索引
@@ -565,35 +654,53 @@
             isFlipped = false;
             document.getElementById('cardInner').classList.remove('rotate-y-180');
 
-            const card = cards[currentIndex];
-            const progressStr = `${currentIndex + 1} / ${cards.length}`;
+            const card = activeCards[currentIndex];
+            const isExcluded = excludedIds.has(getCardKey(card));
+            const progressStr = `${currentIndex + 1} / ${activeCards.length}`;
+
+            // 更新底部排除按鈕狀態
+            const excludeBtn = document.getElementById('excludeBtn');
+            const excludeBtnIcon = document.getElementById('excludeBtnIcon');
+            const excludeBtnText = document.getElementById('excludeBtnText');
+
+            if (excludeBtn && excludeBtnIcon && excludeBtnText) {
+                if (isExcluded) {
+                    excludeBtn.className = 'btn-active min-w-[140px] h-12 px-5 rounded-full bg-purple-50 border border-purple-300 text-purple-700 hover:bg-purple-100 flex justify-center items-center gap-2 shadow-md transition font-semibold text-base';
+                    excludeBtnIcon.className = 'fa-solid fa-rotate-left text-lg text-purple-600';
+                    excludeBtnText.innerText = '取消排除';
+                } else {
+                    excludeBtn.className = 'btn-active min-w-[140px] h-12 px-5 rounded-full bg-white border border-gray-200 text-rose-600 hover:bg-rose-50 flex justify-center items-center gap-2 shadow-md transition font-semibold text-base';
+                    excludeBtnIcon.className = 'fa-solid fa-eye-slash text-lg';
+                    excludeBtnText.innerText = '排除此題';
+                }
+            }
+
+            const excludedBadge = isExcluded ? '<span class="bg-rose-900/80 text-rose-200 text-xs px-2 py-0.5 rounded-full border border-rose-700 ml-1">已排除</span>' : '';
 
             if (isDualMode) {
                 document.getElementById('dualQuestionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('dualAnswerText').innerText = card.answer || '（此題無解答）';
-                document.getElementById('dualCardProgress').innerHTML = `${progressStr} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
+                document.getElementById('dualCardProgress').innerHTML = `${progressStr} ${excludedBadge} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
             } else {
                 document.getElementById('questionText').innerText = card.question || '（此題無內容）';
                 document.getElementById('answerText').innerText = card.answer || '（此題無解答）';
-                document.getElementById('cardProgressFront').innerHTML = `${progressStr} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
-                document.getElementById('cardProgressBack').innerHTML = `${progressStr} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
+                document.getElementById('cardProgressFront').innerHTML = `${progressStr} ${excludedBadge} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
+                document.getElementById('cardProgressBack').innerHTML = `${progressStr} ${excludedBadge} <i class="fa-solid fa-list-ol text-xs ml-1 opacity-70"></i>`;
             }
 
-            document.getElementById('correctCount').innerText = correctCount;
-            document.getElementById('wrongCount').innerText = wrongCount;
-
             if (isLoopMode) {
-                document.getElementById('prevBtn').disabled = cards.length <= 1;
-                document.getElementById('nextBtn').disabled = cards.length <= 1;
+                document.getElementById('prevBtn').disabled = activeCards.length <= 1;
+                document.getElementById('nextBtn').disabled = activeCards.length <= 1;
             } else {
                 document.getElementById('prevBtn').disabled = currentIndex === 0;
-                document.getElementById('nextBtn').disabled = currentIndex === cards.length - 1;
+                document.getElementById('nextBtn').disabled = currentIndex === activeCards.length - 1;
             }
         }
 
         function nextCard() {
-            if (cards.length === 0) return;
-            if (currentIndex < cards.length - 1) {
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) return;
+            if (currentIndex < activeCards.length - 1) {
                 currentIndex++;
                 renderCard();
             } else if (isLoopMode) {
@@ -604,29 +711,31 @@
         }
 
         function prevCard() {
-            if (cards.length === 0) return;
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) return;
             if (currentIndex > 0) {
                 currentIndex--;
                 renderCard();
             } else if (isLoopMode) {
-                currentIndex = cards.length - 1;
+                currentIndex = activeCards.length - 1;
                 renderCard();
-                showToast(`已循環回到第 ${cards.length} 題`, 'info');
+                showToast(`已循環回到第 ${activeCards.length} 題`, 'info');
             }
         }
 
         function openJumpModal() {
-            if (cards.length === 0) {
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) {
                 showToast('目前尚無卡片可跳轉', 'error');
                 return;
             }
 
-            document.getElementById('jumpModalTotalCount').innerText = cards.length;
-            document.getElementById('jumpMiddleNum').innerText = Math.ceil(cards.length / 2);
-            document.getElementById('jumpLastNum').innerText = cards.length;
+            document.getElementById('jumpModalTotalCount').innerText = activeCards.length;
+            document.getElementById('jumpMiddleNum').innerText = Math.ceil(activeCards.length / 2);
+            document.getElementById('jumpLastNum').innerText = activeCards.length;
             
             const jumpInput = document.getElementById('jumpIndexInput');
-            jumpInput.max = cards.length;
+            jumpInput.max = activeCards.length;
             jumpInput.value = currentIndex + 1;
 
             const modal = document.getElementById('jumpModal');
@@ -649,16 +758,18 @@
         }
 
         function setJumpInputValue(num) {
-            if (!num || cards.length === 0) return;
-            const target = Math.max(1, Math.min(cards.length, num));
+            const activeCards = getFilteredCards();
+            if (!num || activeCards.length === 0) return;
+            const target = Math.max(1, Math.min(activeCards.length, num));
             document.getElementById('jumpIndexInput').value = target;
         }
 
         function handleJumpSubmit(e) {
             e.preventDefault();
+            const activeCards = getFilteredCards();
             const val = parseInt(document.getElementById('jumpIndexInput').value, 10);
-            if (isNaN(val) || val < 1 || val > cards.length) {
-                showToast(`請輸入 1 至 ${cards.length} 之間的有效題號`, 'error');
+            if (isNaN(val) || val < 1 || val > activeCards.length) {
+                showToast(`請輸入 1 至 ${activeCards.length} 之間的有效題號`, 'error');
                 return;
             }
 
@@ -714,16 +825,17 @@
             const title = document.getElementById('formModalTitle');
             const questionInput = document.getElementById('modalQuestionInput');
             const answerInput = document.getElementById('modalAnswerInput');
+            const activeCards = getFilteredCards();
 
             if (mode === 'add') {
                 title.innerText = '新增字卡';
                 questionInput.value = '';
                 answerInput.value = '';
             } else {
-                if (cards.length === 0) return;
+                if (activeCards.length === 0) return;
                 title.innerText = '編輯字卡';
-                questionInput.value = cards[currentIndex].question;
-                answerInput.value = cards[currentIndex].answer;
+                questionInput.value = activeCards[currentIndex].question;
+                answerInput.value = activeCards[currentIndex].answer;
             }
 
             modal.classList.remove('hidden');
@@ -749,18 +861,19 @@
 
             setSaveLoading(true);
 
+            const activeCards = getFilteredCards();
             const payload = currentMode === 'add'
                 ? { action: 'add', question, answer }
-                : { action: 'update', rowIndex: cards[currentIndex].rowIndex, question, answer };
+                : { action: 'update', rowIndex: activeCards[currentIndex].rowIndex, question, answer };
 
             if (!gasApiUrl) {
                 setTimeout(() => {
                     if (currentMode === 'add') {
                         cards.push({ rowIndex: cards.length + 2, question, answer });
-                        currentIndex = cards.length - 1;
+                        currentIndex = getFilteredCards().length - 1;
                     } else {
-                        cards[currentIndex].question = question;
-                        cards[currentIndex].answer = answer;
+                        activeCards[currentIndex].question = question;
+                        activeCards[currentIndex].answer = answer;
                     }
                     setSaveLoading(false);
                     closeFormModal();
@@ -783,7 +896,7 @@
         }
 
         function openDeleteModal() {
-            if (cards.length === 0) return;
+            if (getFilteredCards().length === 0) return;
             const modal = document.getElementById('deleteModal');
             const modalCard = document.getElementById('deleteModalCard');
             modal.classList.remove('hidden');
@@ -802,19 +915,22 @@
         }
 
         function executeDelete() {
-            if (cards.length === 0) return;
+            const activeCards = getFilteredCards();
+            if (activeCards.length === 0) return;
             setDeleteLoading(true);
 
-            const card = cards[currentIndex];
+            const card = activeCards[currentIndex];
 
             if (!gasApiUrl) {
                 setTimeout(() => {
-                    cards.splice(currentIndex, 1);
+                    const idxInAll = cards.indexOf(card);
+                    if (idxInAll !== -1) cards.splice(idxInAll, 1);
                     setDeleteLoading(false);
                     closeDeleteModal();
                     showToast('已刪除（示範模式）', 'success');
-                    if (currentIndex >= cards.length) {
-                        currentIndex = Math.max(0, cards.length - 1);
+                    const newActive = getFilteredCards();
+                    if (currentIndex >= newActive.length) {
+                        currentIndex = Math.max(0, newActive.length - 1);
                     }
                     renderCard();
                 }, 500);
@@ -994,25 +1110,32 @@
 
         // 渲染無卡片時的空狀態
         function renderEmptyCard() {
+            const emptyText = showExcluded ? '目前尚無字卡' : '所有字卡皆已被排除';
+            const emptySubtext = showExcluded ? '點擊右上角「新增」即可開始建立題庫' : '可點擊上方「顯示已排除」來查閱或恢復題目';
+
             if (isDualMode) {
-                document.getElementById('dualQuestionText').innerText = '目前尚無字卡';
-                document.getElementById('dualAnswerText').innerText = '點擊右上角「新增」即可開始建立題庫';
+                document.getElementById('dualQuestionText').innerText = emptyText;
+                document.getElementById('dualAnswerText').innerText = emptySubtext;
                 document.getElementById('dualCardProgress').innerHTML = '0 / 0';
             } else {
-                document.getElementById('questionText').innerText = '目前尚無字卡';
-                document.getElementById('answerText').innerText = '點擊右上角「新增」即可開始建立題庫';
+                document.getElementById('questionText').innerText = emptyText;
+                document.getElementById('answerText').innerText = emptySubtext;
                 document.getElementById('cardProgressFront').innerHTML = '0 / 0';
                 document.getElementById('cardProgressBack').innerHTML = '0 / 0';
             }
-            document.getElementById('correctCount').innerText = correctCount;
-            document.getElementById('wrongCount').innerText = wrongCount;
+
+            const excludeBtn = document.getElementById('excludeBtn');
+            if (excludeBtn) {
+                excludeBtn.className = 'btn-active min-w-[140px] h-12 px-5 rounded-full bg-white border border-gray-200 text-gray-400 opacity-50 cursor-not-allowed flex justify-center items-center gap-2 shadow-md transition font-semibold text-base';
+            }
+
             document.getElementById('prevBtn').disabled = true;
             document.getElementById('nextBtn').disabled = true;
         }
 
         // 卡片翻轉邏輯
         function flipCard() {
-            if (cards.length === 0) return;
+            if (getFilteredCards().length === 0) return;
             isFlipped = !isFlipped;
             const cardInner = document.getElementById('cardInner');
             if (isFlipped) {
@@ -1024,12 +1147,12 @@
 
         // 點擊主卡片區域處理
         function handleCardClick(e) {
-            if (cards.length === 0) return;
+            if (getFilteredCards().length === 0) return;
             if (isDualMode) {
                 const container = document.getElementById('cardContainer');
                 const rect = container.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                if (clickX < rect.width / 2) {
+                const clickY = e.clientY - rect.top;
+                if (clickY < rect.height / 2) {
                     prevCard();
                 } else {
                     nextCard();
@@ -1037,19 +1160,6 @@
             } else {
                 flipCard();
             }
-        }
-
-        // 標記熟悉/不熟悉
-        function markCard(isCorrect) {
-            if (cards.length === 0) return;
-            if (isCorrect) {
-                correctCount++;
-                showToast('標記為已掌握！', 'success');
-            } else {
-                wrongCount++;
-                showToast('標記為需加強！', 'error');
-            }
-            nextCard();
         }
 
         // 隨機洗牌
@@ -1069,8 +1179,6 @@
 
         // 重置練習進度
         function resetProgress() {
-            correctCount = 0;
-            wrongCount = 0;
             currentIndex = 0;
             renderCard();
             showToast('練習進度已重置', 'info');
