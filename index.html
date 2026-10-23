@@ -73,7 +73,7 @@
     <header class="w-full max-w-2xl flex justify-between items-center mb-2 md:mb-4 flex-wrap gap-2">
         <div class="flex items-center space-x-2">
             <h1 class="text-xl md:text-2xl font-bold text-gray-800" id="appTitle">字卡學習</h1>
-            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.5.1</span>
+            <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-mono font-semibold">v1.6.0</span>
             <span id="syncBadge" class="bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                 <i class="fa-solid fa-spinner animate-spin text-xs"></i> 載入中...
             </span>
@@ -450,11 +450,30 @@
                 fetchCardsFromAPI();
             } else {
                 cards = normalizeCardData(mockCards);
+                loadSavedIndex();
                 renderCard();
                 updateSyncStatus('demo', '示範模式 (點選⚙️設定API)');
             }
             setupKeyboardListeners();
         };
+
+        // 載入上次儲存的題號位置
+        function loadSavedIndex() {
+            const saved = localStorage.getItem('flashcard_saved_index');
+            if (saved !== null) {
+                const idx = parseInt(saved, 10);
+                if (!isNaN(idx) && idx >= 0 && idx < cards.length) {
+                    currentIndex = idx;
+                    if (idx > 0) {
+                        showToast(`已自動恢復至上次第 ${idx + 1} 題`, 'info');
+                    }
+                } else {
+                    currentIndex = 0;
+                }
+            } else {
+                currentIndex = 0;
+            }
+        }
 
         function toggleLoopMode() {
             isLoopMode = !isLoopMode;
@@ -539,6 +558,9 @@
                 renderEmptyCard();
                 return;
             }
+
+            // 自動儲存當前觀看的題號索引
+            localStorage.setItem('flashcard_saved_index', currentIndex);
 
             isFlipped = false;
             document.getElementById('cardInner').classList.remove('rotate-y-180');
@@ -931,7 +953,7 @@
 
                     if (parsedCards.length > 0) {
                         cards = parsedCards;
-                        currentIndex = 0;
+                        loadSavedIndex();
                         renderCard();
                         updateSyncStatus('success', `已載入 ${cards.length} 題`);
                     } else {
